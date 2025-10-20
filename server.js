@@ -6,8 +6,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const COLLECTION_ID = '68e59af8f6869eeb19ac0731';
-const WEBFLOW_TOKEN = '75be07dd8bc36754d2df5befb45ec6e7a8d306f054afcb9653e20c4b103f3dd0';
+// استخدم Environment Variables بدل القيم الثابتة
+const COLLECTION_ID = process.env.COLLECTION_ID;
+const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
+
+if (!COLLECTION_ID || !WEBFLOW_TOKEN) {
+    console.error("ERROR: COLLECTION_ID or WEBFLOW_TOKEN is not set in environment variables!");
+    process.exit(1);
+}
 
 app.post('/save-to-webflow', async (req, res) => {
     const rows = req.body.rows;
