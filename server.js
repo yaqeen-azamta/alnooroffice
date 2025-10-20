@@ -1,13 +1,14 @@
-const express = require('express');
-const fetch = require('node-fetch'); // Node-fetch v2
-const cors = require('cors');
+// server.js
+import express from 'express';
+import fetch from 'node-fetch';
+import cors from 'cors';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// استخدم Environment Variables
+// استخدم Environment Variables بدل القيم الثابتة
 const COLLECTION_ID = process.env.COLLECTION_ID;
 const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
 
@@ -25,9 +26,10 @@ app.post('/save-to-webflow', async (req, res) => {
     try {
         const results = [];
         for (const row of rows) {
+            // أهم شي: كل البيانات داخل fields
             const payload = {
                 fields: {
-                    Name: row.Name,
+                    name: row.name || row.Name, // تأكد من الاسم
                     'id-number': row['id-number'],
                     'court-place': row['court-place'],
                     'court-type': row['court-type'],
@@ -53,7 +55,7 @@ app.post('/save-to-webflow', async (req, res) => {
 
         res.json({ success: true, results });
     } catch (error) {
-        console.error('Error connecting to Webflow API:', error);
+        console.error(error);
         res.status(500).json({ error: 'Error connecting to Webflow API' });
     }
 });
