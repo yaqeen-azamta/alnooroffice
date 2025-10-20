@@ -1,12 +1,13 @@
 const express = require('express');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch'); // Node-fetch v2
 const cors = require('cors');
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// استخدم Environment Variables بدل القيم الثابتة
+// استخدم Environment Variables
 const COLLECTION_ID = process.env.COLLECTION_ID;
 const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
 
@@ -26,11 +27,11 @@ app.post('/save-to-webflow', async (req, res) => {
         for (const row of rows) {
             const payload = {
                 fields: {
-                    name: row.name,
-                    'id-number': row.idNumber,
-                    'court-place': row.courtPlace,
-                    'court-type': row.courtType,
-                    'court-date': row.courtDate,
+                    Name: row.Name,
+                    'id-number': row['id-number'],
+                    'court-place': row['court-place'],
+                    'court-type': row['court-type'],
+                    'court-date': row['court-date'],
                     _archived: false,
                     _draft: false
                 }
@@ -52,7 +53,7 @@ app.post('/save-to-webflow', async (req, res) => {
 
         res.json({ success: true, results });
     } catch (error) {
-        console.error(error);
+        console.error('Error connecting to Webflow API:', error);
         res.status(500).json({ error: 'Error connecting to Webflow API' });
     }
 });
