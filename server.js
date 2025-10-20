@@ -1,52 +1,45 @@
-// server.js
-import express from 'express';
-import fetch from 'node-fetch';
-import cors from 'cors';
+import express from "express";
+import bodyParser from "body-parser";
+import fetch from "node-fetch"; // استدعاء fetch يدوياً
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
+app.use(bodyParser.json());
 
-app.use(cors());
-app.use(express.json());
-
-// استخدم Environment Variables بدل القيم الثابتة
-const COLLECTION_ID = process.env.COLLECTION_ID;
+const WEBFLOW_API_URL = "https://api.webflow.com/v2/collections/68e59af8f6869eeb19ac0731/items";
 const WEBFLOW_TOKEN = process.env.WEBFLOW_TOKEN;
 
-if (!COLLECTION_ID || !WEBFLOW_TOKEN) {
-    console.error("ERROR: COLLECTION_ID or WEBFLOW_TOKEN is not set in environment variables!");
-    process.exit(1);
-}
-
-app.post('/save-to-webflow', async (req, res) => {
-    const rows = req.body.rows;
-    if (!rows || !Array.isArray(rows) || !rows.length) {
-        return res.status(400).json({ error: 'No data provided' });
-    }
-
+app.post("/save-to-webflow", async (req, res) => {
     try {
-        const results = [];
-        for (const row of rows) {
-            // أهم شي: كل البيانات داخل fields
-            const payload = {
-                fields: {
-                    name: row.name || row.Name, // تأكد من الاسم
-                    'id-number': row['id-number'],
-                    'court-place': row['court-place'],
-                    'court-type': row['court-type'],
-                    'court-date': row['court-date'],
-                    _archived: false,
-                    _draft: false
-                }
-            };
+        const records = req.body;
 
-            const response = await fetch(`https://api.webflow.com/collections/${COLLECTION_ID}/items`, {
-                method: 'POST',
+        if (!Array.isArray(records)) {
+            return res.status(400).json({ error: "Invalid data format" });
+        }
+
+        const results = [];
+
+        for (const record of records) {
+            const response = await fetch(WEBFLOW_API_URL, {
+                method: "POST",
                 headers: {
-                    'Authorization': `Bearer ${WEBFLOW_TOKEN}`,
-                    'accept-version': '1.0.0',
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${WEBFLOW_TOKEN}`,
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    isArchived: false,
+                    isDraft: false,
+                    fields: {
+                        name: record.name || "No Name",
+                        "id-number": record.idNumber,
+                        "court-place": record.courtPlace,
+                        "court-type": record.courtType,
+                        "court-date": record.courtDate,
+                        slug: `${record.idNumber}-${Date.now()}` // slug فريد
+                    },
+                }),
             });
 
             const data = await response.json();
@@ -54,11 +47,12 @@ app.post('/save-to-webflow', async (req, res) => {
         }
 
         res.json({ success: true, results });
+
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error connecting to Webflow API' });
+        console.error("Error saving to Webflow:", error);
+        res.status(500).json({ error: "Server error", details: error.message });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
